@@ -14,10 +14,59 @@ const RegisterPage = () => {
   const router = useRouter();
 
   // Form submission handler
-  const handleSubmit = async (e) => {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      await signUp.create({
+        first_name: firstName,
+        last_name: lastName,
+        email_address: email,
+        password: password,
+      });
+
+      // Send email
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      });
+
+      // Change UI
+      setPendingVerification(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // Verification code submission handler via email
-  const onPressVerify = async (e) => {};
+  const onPressVerify = async (e) => {
+    e.preventDefault();
+
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code,
+      });
+      if (completeSignUp.status !== "complete") {
+        // Investigate the response, to see if there was an error,
+        // or if the user needs to complete more steps
+        console.log(JSON.stringify(completeSignUp, null, 2));
+      }
+      if (completeSignUp.status === "complete") {
+        // The user has completed all steps, and is now signed in
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(JSON.stringify(error, null, 2));
+    }
+  };
 
   return (
     <div className="border p-5 rounded" style={{ width: "500px" }}>
@@ -90,6 +139,25 @@ const RegisterPage = () => {
             Create an Account
           </button>
         </form>
+      )}
+
+      {pendingVerification && (
+        <div>
+          <form className="space-y-4 md:space-y-6">
+            <input
+              value={code}
+              className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+              placeholder="Enter Verification Code..."
+              onChange={(e) => setCode(e.target.value)}
+            />
+            <button
+              type="submit"
+              onClick={onPressVerify}
+              className="w-full text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+              Verify Email
+            </button>
+          </form>
+        </div>
       )}
     </div>
   );
