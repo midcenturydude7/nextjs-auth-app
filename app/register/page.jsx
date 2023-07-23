@@ -1,19 +1,20 @@
 "use client";
 import React from "react";
+import { useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 const RegisterPage = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const [email, setEmail] = React.useState(""); // The user's email address
-  const [firstName, setFirstName] = React.useState(""); // The user's first name
-  const [lastName, setLastName] = React.useState(""); // The user's last name
-  const [password, setPassword] = React.useState(""); // The user's password
-  const [pendingVerification, setPendingVerification] = React.useState(false); // Whether the user is pending verification
-  const [code, setCode] = React.useState(""); // The verification code
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [code, setCode] = useState("");
   const router = useRouter();
 
-  // Form submission handler
+  // Form Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -26,25 +27,22 @@ const RegisterPage = () => {
         first_name: firstName,
         last_name: lastName,
         email_address: email,
-        password: password,
+        password,
       });
 
-      // Send email
-      await signUp.prepareEmailAddressVerification({
-        strategy: "email_code",
-      });
+      // send the email.
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
-      // Change UI
+      // change the UI to our pending section.
       setPendingVerification(true);
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // Verification code submission handler via email
+  // Verify User Email Code
   const onPressVerify = async (e) => {
     e.preventDefault();
-
     if (!isLoaded) {
       return;
     }
@@ -54,17 +52,16 @@ const RegisterPage = () => {
         code,
       });
       if (completeSignUp.status !== "complete") {
-        // Investigate the response, to see if there was an error,
-        // or if the user needs to complete more steps
+        /*  investigate the response, to see if there was an error
+         or if the user needs to complete more steps.*/
         console.log(JSON.stringify(completeSignUp, null, 2));
       }
       if (completeSignUp.status === "complete") {
-        // The user has completed all steps, and is now signed in
         await setActive({ session: completeSignUp.createdSessionId });
         router.push("/");
       }
-    } catch (error) {
-      console.log(JSON.stringify(error, null, 2));
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
     }
   };
 
@@ -75,13 +72,13 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="first_name"
               className="block mb-2 text-sm font-medium text-gray-900">
               First Name
             </label>
             <input
               type="text"
-              name="first name"
+              name="first_name"
               id="first_name"
               onChange={(e) => setFirstName(e.target.value)}
               className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5"
@@ -90,13 +87,13 @@ const RegisterPage = () => {
           </div>
           <div>
             <label
-              htmlFor="email"
+              htmlFor="last_name"
               className="block mb-2 text-sm font-medium text-gray-900">
               Last Name
             </label>
             <input
               type="text"
-              name="last name"
+              name="last_name"
               id="last_name"
               onChange={(e) => setLastName(e.target.value)}
               className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5"
@@ -107,7 +104,7 @@ const RegisterPage = () => {
             <label
               htmlFor="email"
               className="block mb-2 text-sm font-medium text-gray-900">
-              Email
+              Email Address
             </label>
             <input
               type="email"
@@ -115,12 +112,13 @@ const RegisterPage = () => {
               id="email"
               onChange={(e) => setEmail(e.target.value)}
               className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5"
+              placeholder="name@company.com"
               required={true}
             />
           </div>
           <div>
             <label
-              htmlFor="email"
+              htmlFor="password"
               className="block mb-2 text-sm font-medium text-gray-900">
               Password
             </label>
@@ -129,18 +127,17 @@ const RegisterPage = () => {
               name="password"
               id="password"
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5"
+              className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
               required={true}
             />
           </div>
           <button
             type="submit"
             className="w-full text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-            Create an Account
+            Create an account
           </button>
         </form>
       )}
-
       {pendingVerification && (
         <div>
           <form className="space-y-4 md:space-y-6">
